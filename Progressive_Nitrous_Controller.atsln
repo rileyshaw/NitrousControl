@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Progressive_Nitrous_Controller", "Progressive_Nitrous_Controller\Progressive_Nitrous_Controller.cproj", "{263F43D6-CB42-4B8B-A8DB-AA7D79DD11DB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{263F43D6-CB42-4B8B-A8DB-AA7D79DD11DB}.Debug|AVR.ActiveCfg = Debug|AVR
+		{263F43D6-CB42-4B8B-A8DB-AA7D79DD11DB}.Debug|AVR.Build.0 = Debug|AVR
+		{263F43D6-CB42-4B8B-A8DB-AA7D79DD11DB}.Release|AVR.ActiveCfg = Release|AVR
+		{263F43D6-CB42-4B8B-A8DB-AA7D79DD11DB}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
