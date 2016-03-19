@@ -62,6 +62,8 @@ int progressRate = 50; //max is redline
 double dutyCycle;
 double TPS; //0 to 255
 int redLine = 10000; //max RPM value or Y value
+double engineLoad;
+int underLoadProgress = 50;
 
 
 #define	LED_PIN			PB0
@@ -374,11 +376,95 @@ int handleProgressRate(){
 	}
 }
 
+
+int handleUnderLoadProgress(){
+	while(1){
+		if(buttonEnter() == 1){
+			while(buttonEnter() == 1){
+				//wait until they release the button
+			}
+			return underLoadProgress;
+		}
+		if(buttonUp() == 1){
+			underLoadProgress+=1;
+			if(underLoadProgress>=100){
+				underLoadProgress=100;
+			}
+			if(waitcount >= MAXWAITCOUNT){
+				clearLCD();
+				setCursor(line1);
+				printf(" Under Load Progress");
+				setCursor(line2);
+				printf("      Set: %d%%",underLoadProgress);
+				setCursor(line4);
+				printf("Press Enter to Cont.");
+				waitcount = 0;
+			}else{
+				waitcount++;
+			}
+			wait(hasHeldUpDelay); //IMPORTANT: not sure if the sleep function should be used here, essentially need something that will pause for a given amount of time in milliseconds
+			hasHeldUpDelay = (int)((double)hasHeldUpDelay * 7/10); //over time reduce the delay exponentially
+			if(hasHeldUpDelay <= MINWAIT){
+				hasHeldUpDelay = MINWAIT; //shortest possible delay is 50
+			}
+		}else{ //if both the up and down are pressed at the same time, the up will be registered over the down
+			hasHeldUpDelay = MAXWAIT;
+			if(buttonDown() == 1){
+				underLoadProgress = underLoadProgress - 1;
+				if(underLoadProgress<=0){
+					underLoadProgress=0;
+				}
+				wait(hasHeldDownDelay); //IMPORTANT: not sure if the sleep function should be used here, essentially need something that will pause for a given amount of time in milliseconds
+				hasHeldDownDelay = (int)((double)hasHeldDownDelay * 7/10); //over time reduce the delay exponentially
+				if(hasHeldDownDelay <= MINWAIT){
+					hasHeldDownDelay = MINWAIT; //shortest possible delay is 50
+				}
+				}else{
+				hasHeldDownDelay = MAXWAIT;
+			}
+		}
+		if(buttonBack() == 1){ //if they press the back button
+			while(buttonBack() == 1){
+				//wait until they release the button
+			}
+			return -1;
+		}
+		if(waitcount >= MAXWAITCOUNT){
+			clearLCD();
+			setCursor(line1);
+			printf(" Under Load Progress");
+			setCursor(line2);
+			printf("      Set: %d%%",underLoadProgress);
+			setCursor(line4);
+			printf("Press Enter to Cont.");
+			waitcount = 0;
+		}else{
+			waitcount++;
+		}
+		wait(WAITAMOUNT);
+	}
+}
+
+
+
 double calculateActualSlope(){
 	double returnval = (-5 * progressRate) + 500;
 	return returnval;
 }
 
+
+void calculateEngineLoad(){
+	double upper = redLine * 5;
+	engineLoad = RPM*TPS;
+	double final = (upper - engineLoad)/upper; // upper= 100,000
+
+}
+
+double calculateUnderLoad(){
+	double finalVal = (calculateEngineLoad()-engagementRPM)/calculateActualSlope();
+	return finalVal;
+
+}
 
 double calculateDutyCycle(){
 	double finalVal = (RPM-engagementRPM)/calculateActualSlope();
@@ -468,20 +554,25 @@ int main(void)
 				if(j == -1){
 					curPage = 2;
 				}else{
-					isSetup = 0;
-					curPage = 1;//done setting up values, start executing
+					curPage = 4;
 					progressRate = j;
 				}
-		    }
-		}else{ //if we are currently executing
-			if(waitcount >= MAXWAITCOUNT){
-				clearLCD();
-				setCursor(line2);
-				printf("     RPM:%dTPS:%f",RPM,TPS);
-				waitcount= 0;
-			}else{
-				waitcount++;
+		    }else if(curPage == 4){
+				j = handleUnderLoadProgress();
+				if(j == -1){
+					curPage = 3;
+				}else{
+					isSetup = 0;
+					curPage = 1;//done setting up values, start executing
+					underLoadProgress = j;
+				}
 			}
+		}else{ //if we are currently executing
+			clearLCD();
+			setCursor(line2);
+			printf("     RPM:%dTPS:%d",RPM,(int)TPS);
+			calculateEngineLoad();
+			waitcount= 0;
 			if(buttonBack() == 1){ //if they press the back button
 				while(buttonBack() == 1){
 					//wait until they release the button
@@ -492,8 +583,15 @@ int main(void)
 		    if (RPM >= engagementRPM ){
 			    if(TPS > 4.8){
 				    double x = calculateDutyCycle();
-					setCursor(line3);
-				    printf("    Duty Cycle: %f",x);
+					double x2 = calculateUnderLoad();
+				    if(x2 < x){
+				    	setCursor(line3);
+				   		printf("    Duty Cycle: %d",(int)x);
+				    }else{
+				    	setCursor(line3);
+				   		printf("    Under Load: %d",(int)x2);
+				    }
+					
 					wait(WAITAMOUNT);
 				    //do weird shit with x
 			    }
